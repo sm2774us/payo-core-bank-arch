@@ -10,7 +10,7 @@ resource "aws_security_group" "msk" {
 
   ingress {
     from_port       = 9094
-    to_port          = 9094
+    to_port         = 9094
     protocol        = "tcp"
     security_groups = var.allowed_security_group_ids
   }
@@ -27,7 +27,7 @@ resource "aws_security_group" "msk" {
 
 resource "aws_msk_cluster" "this" {
   cluster_name           = "${var.name}-msk"
-  kafka_version           = var.kafka_version
+  kafka_version          = var.kafka_version
   number_of_broker_nodes = length(var.private_subnet_ids)
 
   broker_node_group_info {

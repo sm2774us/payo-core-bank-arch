@@ -35,8 +35,10 @@ async def create_transaction(
         status_code, response_body = cached
         return TransactionOut.model_validate_json(response_body)
 
-    legs = [PostingLeg(account_id=leg.account_id, direction=leg.direction, amount=leg.amount)
-            for leg in body.legs]
+    legs = [
+        PostingLeg(account_id=leg.account_id, direction=leg.direction, amount=leg.amount)
+        for leg in body.legs
+    ]
     try:
         txn = await post_transaction(
             session, reference=body.reference, description=body.description, legs=legs
@@ -73,9 +75,7 @@ async def apply_screening_decision(
     if txn is None:
         raise HTTPException(404, "Transaction not found")
     if txn.state != TransactionState.PENDING_SCREENING:
-        raise HTTPException(
-            409, f"Transaction is in state {txn.state}, not PENDING_SCREENING"
-        )
+        raise HTTPException(409, f"Transaction is in state {txn.state}, not PENDING_SCREENING")
 
     txn.screening_decision = body.decision
     txn.screening_decided_at = datetime.now(timezone.utc)

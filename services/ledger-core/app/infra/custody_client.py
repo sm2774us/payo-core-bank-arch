@@ -4,6 +4,7 @@ Real implementation would wrap a Fireblocks / Anchorage / BitGo SDK client
 behind this exact Protocol so the rest of the codebase (and its tests) never
 depend on a specific vendor. Swapping vendors is a one-file change.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

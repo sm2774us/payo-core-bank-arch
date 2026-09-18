@@ -47,7 +47,92 @@ payo-core-bank/
 - Every mutating call requires an `Idempotency-Key` header; the key + request hash is stored (`idempotency_keys`, unique-constrained) so a retried request returns the original result instead of re-executing.
 - **Double-entry invariant** (`sum(entries) per transaction == 0`) is enforced at the application layer in `domain/ledger.py` and independently re-verified by the reconciliation worker and by an integration test that queries raw Postgres state — mirroring the "audit service correctness directly against DB state" practice from production experience.
 
-## 4. Run instructions
+## 4. Setup — Windows 11, Ubuntu (WSL), and Ubuntu (bare metal)
+
+Pick your platform. All three end with the same repo cloned and dependencies ready.
+
+### 4a. Windows 11 (native, PowerShell)
+
+```powershell
+# 1. Git
+winget install --id Git.Git -e
+
+# 2. Python 3.12
+winget install --id Python.Python.3.12 -e
+
+# 3. Docker Desktop (provides docker + docker compose)
+winget install --id Docker.DockerDesktop -e
+
+# 4. Terraform
+winget install --id Hashicorp.Terraform -e
+
+# 5. kubectl
+winget install --id Kubernetes.kubectl -e
+
+# 6. Clone and install
+git clone https://github.com/<your-org>/payo-core-bank.git
+cd payo-core-bank
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install pre-commit==3.8.0
+```
+> Native Windows works for editing, Docker Desktop, and `docker compose up`. For
+> the Python test suites, WSL (4b) is recommended — the project targets Linux
+> container runtimes and this avoids path/venv quirks on native Windows.
+
+### 4b. Windows 11 with WSL2 (Ubuntu) — recommended
+
+```powershell
+# In PowerShell (Administrator): install WSL2 + Ubuntu, then reboot if prompted
+wsl --install -d Ubuntu-24.04
+```
+Then open the **Ubuntu** app from the Start Menu and follow **4c** below inside it.
+Docker Desktop for Windows, if installed, auto-integrates with WSL2 (enable
+*Settings → Resources → WSL Integration → Ubuntu-24.04*) so `docker` works
+inside WSL without a separate Linux Docker install.
+
+### 4c. Ubuntu 24.04 (WSL or bare metal / cloud VM)
+
+```bash
+# 1. System packages
+sudo apt update
+sudo apt install -y git python3.12 python3.12-venv python3-pip curl unzip
+
+# 2. Docker Engine (skip if using Docker Desktop's WSL integration)
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker "$USER"   # log out/in (or `newgrp docker`) for this to take effect
+
+# 3. Terraform
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install -y terraform
+
+# 4. kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# 5. Clone and install
+git clone https://github.com/<your-org>/payo-core-bank.git
+cd payo-core-bank
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install pre-commit==3.8.0
+```
+
+### 4d. Install the pre-commit git hook (all platforms, once venv above is active)
+
+```bash
+pre-commit install --install-hooks   # registers the hook in .git/hooks/pre-commit
+pre-commit run --all-files           # optional: run once now against the whole repo
+```
+From then on, `git commit` automatically runs ruff, ruff-format, mypy,
+terraform fmt/validate, hadolint, and basic hygiene checks (trailing
+whitespace, large files, YAML/JSON syntax) on the changed files — the exact
+same checks CI enforces, so a broken commit is caught locally before it ever
+reaches a PR. To update hook versions later: `pre-commit autoupdate`. To run
+a single hook ad hoc: `pre-commit run ruff --all-files`.
+
+## 5. Run instructions
 
 ### Local (no Docker)
 ```bash
@@ -87,7 +172,7 @@ kubectl apply -k ../../../k8s/overlays/dev
 kubectl get pods -n payo-core
 ```
 
-## 5. CI/CD (`.github/workflows/ci.yml`)
+## 6. CI/CD (`.github/workflows/ci.yml`)
 
 Runs on every PR, each step gating the next:
 1. `pre-commit run --all-files` — ruff, black, mypy, terraform fmt/validate, hadolint, end-of-file/whitespace hygiene.
@@ -98,7 +183,7 @@ Runs on every PR, each step gating the next:
 
 All actions are pinned to a full commit SHA (not a floating tag) so the pipeline is reproducible — the answer to "how do you know what's reviewed is what's running in prod."
 
-## 6. Candidate mapping — Shaikat Majumdar → this JD
+## 7. Candidate mapping — Shaikat Majumdar → this JD
 
 | JD requirement | Demonstrated in this repo | Prior real-world basis (resume) |
 |---|---|---|
@@ -110,7 +195,7 @@ All actions are pinned to a full commit SHA (not a floating tag) so the pipeline
 | Multi-region, K8s, IaC | `infra/terraform`, `infra/k8s` | Millburn: multi-region K8s; JPM: multi-cloud GCP/AWS |
 | Audit readiness / evidence generation | `reconciliation-worker/app/evidence.py` | JPM: DR targets & risk in ADRs; BAM: DB-state-vs-log verification |
 
-## 7. Intentionally scoped as a stub (with clear extension points)
+## 8. Intentionally scoped as a stub (with clear extension points)
 
 This is a portfolio/showcase repo, not production PDB code:
 - **On-chain custody** (`ledger-core/app/infra/custody_client.py`) — interface + deterministic mock; a real implementation swaps in a Fireblocks/Anchorage SDK client behind the same `CustodyClient` protocol.

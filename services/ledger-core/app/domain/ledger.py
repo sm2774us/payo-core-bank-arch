@@ -3,6 +3,7 @@
 Kept free of FastAPI/HTTP concerns so it can be unit-tested in isolation and
 reused by the reconciliation worker.
 """
+
 from __future__ import annotations
 
 import json

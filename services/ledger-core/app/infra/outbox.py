@@ -9,6 +9,7 @@ At-least-once delivery to Kafka + an idempotent consumer on the other side is
 the standard, defensible pattern for exactly-once *effects* without requiring
 distributed transactions across Postgres and Kafka.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -67,7 +68,9 @@ async def relay_once(publisher: KafkaPublisher, batch_size: int = 100) -> int:
     return relayed
 
 
-async def run_forever(publisher: KafkaPublisher, poll_interval_seconds: float = 1.0) -> None:  # pragma: no cover
+async def run_forever(
+    publisher: KafkaPublisher, poll_interval_seconds: float = 1.0
+) -> None:  # pragma: no cover
     while True:
         n = await relay_once(publisher)
         if n:

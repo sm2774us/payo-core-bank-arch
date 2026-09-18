@@ -6,6 +6,7 @@ PENDING_SCREENING. Every decision is persisted (in-memory here; a real
 deployment persists to its own audited datastore, never silently discarded)
 so a HOLD decision always produces a traceable case for escalation.
 """
+
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -55,7 +56,9 @@ async def healthz() -> dict[str, str]:
 
 @app.post("/screen", response_model=ScreenResponse)
 async def screen(body: ScreenRequest) -> ScreenResponse:
-    result = await _provider.screen(party_name=body.party_name, party_ref=body.party_ref)
+    result = await _provider.screen(
+        party_name=body.party_name, party_ref=body.party_ref
+    )
     now = datetime.now(timezone.utc).isoformat()
 
     case_id = None

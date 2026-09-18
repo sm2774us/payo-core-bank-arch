@@ -8,6 +8,7 @@ Run locally with:
     export DATABASE_URL=postgresql+asyncpg://postgres:payo@localhost:5432/ledger
     pytest -q -m integration
 """
+
 import os
 from decimal import Decimal
 

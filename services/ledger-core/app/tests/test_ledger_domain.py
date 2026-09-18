@@ -98,9 +98,7 @@ async def test_post_transaction_writes_outbox_event(session):
 
     from app.domain.models import OutboxEvent
 
-    result = await session.execute(
-        select(OutboxEvent).where(OutboxEvent.aggregate_id == txn.id)
-    )
+    result = await session.execute(select(OutboxEvent).where(OutboxEvent.aggregate_id == txn.id))
     events = result.scalars().all()
     assert len(events) == 1
     assert events[0].event_type == "ledger.transaction.posted"

@@ -5,6 +5,7 @@ reconciliation-worker): for every transaction_id, SUM(entry.signed_amount) == 0.
 Account balances are NEVER stored — they are always derived by summing entries.
 This eliminates an entire class of "balance drifted from history" bugs.
 """
+
 import enum
 import uuid
 from datetime import datetime, timezone
@@ -35,10 +36,10 @@ class Base(DeclarativeBase):
 
 class AccountType(str, enum.Enum):
     CUSTOMER_FIAT = "CUSTOMER_FIAT"
-    RESERVE = "RESERVE"                # fiat held at reserve custodian, backing PAYO-USD
+    RESERVE = "RESERVE"  # fiat held at reserve custodian, backing PAYO-USD
     ONCHAIN_MIRROR = "ONCHAIN_MIRROR"  # ledger-side mirror of on-chain token supply
     FEE_REVENUE = "FEE_REVENUE"
-    SUSPENSE = "SUSPENSE"              # holding account for screening holds / breaks
+    SUSPENSE = "SUSPENSE"  # holding account for screening holds / breaks
 
 
 class TransactionState(str, enum.Enum):

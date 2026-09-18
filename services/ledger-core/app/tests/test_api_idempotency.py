@@ -18,18 +18,14 @@ async def test_create_account_and_transaction_flow(client):
             {"account_id": reserve["id"], "direction": "CREDIT", "amount": "250"},
         ],
     }
-    resp1 = await client.post(
-        "/transactions", json=body, headers={"Idempotency-Key": "key-abc"}
-    )
+    resp1 = await client.post("/transactions", json=body, headers={"Idempotency-Key": "key-abc"})
     assert resp1.status_code == 201
     txn1 = resp1.json()
     assert txn1["state"] == "PENDING_SCREENING"
 
     # Replaying the SAME key + SAME body must return the original result, not
     # create a second transaction (exactly-once).
-    resp2 = await client.post(
-        "/transactions", json=body, headers={"Idempotency-Key": "key-abc"}
-    )
+    resp2 = await client.post("/transactions", json=body, headers={"Idempotency-Key": "key-abc"})
     assert resp2.status_code == 201
     assert resp2.json()["id"] == txn1["id"]
 
@@ -146,6 +142,10 @@ async def test_screening_hold_path(client):
 
     decided = await client.post(
         f"/transactions/{created['id']}/screening-decision",
-        json={"decision": "HOLD", "screened_by": "compliance-officer-2", "rationale": "watchlist hit"},
+        json={
+            "decision": "HOLD",
+            "screened_by": "compliance-officer-2",
+            "rationale": "watchlist hit",
+        },
     )
     assert decided.json()["state"] == "SCREENED_HOLD"

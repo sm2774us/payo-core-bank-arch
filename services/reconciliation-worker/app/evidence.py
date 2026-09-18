@@ -8,6 +8,7 @@ The signature here is a placeholder HMAC over a canonical JSON encoding, with
 a clearly marked seam (`sign()`) for swapping in a KMS-backed asymmetric
 signature in a real deployment — see infra/terraform/modules/kms.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -84,11 +85,15 @@ def build_evidence_bundle(
         ),
         reserve_vs_mirror_break=reserve_balance - onchain_mirror_balance,
         mirror_vs_onchain_break=onchain_mirror_balance - onchain_actual_supply,
-        is_balanced=(reserve_balance == onchain_mirror_balance == onchain_actual_supply),
+        is_balanced=(
+            reserve_balance == onchain_mirror_balance == onchain_actual_supply
+        ),
         generated_by=generated_by,
     )
     signature = sign(bundle.to_canonical_json(), secret_key)
-    return EvidenceBundle(**{**asdict(bundle), "inputs": bundle.inputs, "signature": signature})
+    return EvidenceBundle(
+        **{**asdict(bundle), "inputs": bundle.inputs, "signature": signature}
+    )
 
 
 def verify_evidence_bundle(bundle: EvidenceBundle, secret_key: bytes) -> bool:

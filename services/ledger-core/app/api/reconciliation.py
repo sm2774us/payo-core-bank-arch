@@ -44,7 +44,11 @@ async def three_way_reconciliation(
     or auditor would want surfaced, with the two numbers that disagree named
     explicitly (never "reconciliation failed" with no numbers)."""
     reserve_accounts = (
-        (await session.execute(select(Account.id).where(Account.account_type == AccountType.RESERVE)))
+        (
+            await session.execute(
+                select(Account.id).where(Account.account_type == AccountType.RESERVE)
+            )
+        )
         .scalars()
         .all()
     )

@@ -3,6 +3,7 @@
 Kept as a single Pydantic settings object so every config value is typed,
 validated at process start, and visible in one place for an auditor/reviewer.
 """
+
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict

@@ -6,6 +6,7 @@ small deterministic watchlist so the showcase repo has zero external deps
 and fully reproducible test outcomes — critical for a component whose whole
 job is to be auditable.
 """
+
 from __future__ import annotations
 
 import re
@@ -44,4 +45,6 @@ class MockWatchlistProvider:
         normalized = _normalize(party_name)
         matches = [term for term in _MOCK_WATCHLIST if term in normalized]
         decision = "HOLD" if matches else "CLEAR"
-        return ScreeningResult(decision=decision, matched_terms=matches, provider=self.provider_name)
+        return ScreeningResult(
+            decision=decision, matched_terms=matches, provider=self.provider_name
+        )

@@ -15,7 +15,11 @@ async def client():
 async def test_clear_decision_for_unlisted_party(client):
     resp = await client.post(
         "/screen",
-        json={"transaction_id": "t1", "party_name": "Ordinary Business LLC", "party_ref": "r1"},
+        json={
+            "transaction_id": "t1",
+            "party_name": "Ordinary Business LLC",
+            "party_ref": "r1",
+        },
     )
     assert resp.status_code == 200
     body = resp.json()
@@ -57,9 +61,13 @@ async def test_case_resolution_lifecycle(client):
     ).json()
     case_id = screened["case_id"]
 
-    resolved = await client.post(f"/cases/{case_id}/resolve", params={"resolution": "CLEARED"})
+    resolved = await client.post(
+        f"/cases/{case_id}/resolve", params={"resolution": "CLEARED"}
+    )
     assert resolved.status_code == 200
     assert resolved.json()["status"] == "CLEARED"
 
-    bad = await client.post(f"/cases/{case_id}/resolve", params={"resolution": "NONSENSE"})
+    bad = await client.post(
+        f"/cases/{case_id}/resolve", params={"resolution": "NONSENSE"}
+    )
     assert bad.status_code == 422
