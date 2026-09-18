@@ -1,0 +1,7 @@
+# Every change to the ledger core or compliance gate requires review from the
+# platform lead — this is the enforced "uncompromising code review standard"
+# the JD calls out, not just a policy statement.
+/services/ledger-core/          @platform-lead @core-backend-team
+/services/sanctions-screening/  @compliance-eng-lead @core-backend-team
+/infra/                         @platform-lead @sre-lead
+/docs/adr/                      @platform-lead

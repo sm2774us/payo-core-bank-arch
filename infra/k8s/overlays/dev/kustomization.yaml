@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: payo-core
+resources:
+  - ../../base
+images:
+  - name: payo/ledger-core
+    newName: 123456789012.dkr.ecr.us-east-1.amazonaws.com/payo/ledger-core
+    newTag: dev
+  - name: payo/sanctions-screening
+    newName: 123456789012.dkr.ecr.us-east-1.amazonaws.com/payo/sanctions-screening
+    newTag: dev
+replicas:
+  - name: ledger-core
+    count: 2
+  - name: sanctions-screening
+    count: 1
+configMapGenerator:
+  - name: ledger-core-config
+    behavior: merge
+    literals:
+      - ENVIRONMENT=dev

@@ -1,0 +1,23 @@
+[project]
+name = "sanctions-screening"
+version = "0.1.0"
+description = "Sanctions screening gate with auditable decision + case escalation hooks"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.115.0",
+    "uvicorn[standard]==0.30.6",
+    "pydantic==2.9.2",
+]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.3", "pytest-asyncio==0.24.0", "httpx==0.27.2", "ruff==0.6.9"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]

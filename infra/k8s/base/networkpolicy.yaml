@@ -1,0 +1,29 @@
+# Default-deny, then explicitly allow only the traffic the transaction path
+# actually needs. This is the network-segmentation control an examiner checks
+# for a system handling regulated funds movement.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: payo-core
+spec:
+  podSelector: {}
+  policyTypes: ["Ingress", "Egress"]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ledger-core-to-sanctions-screening
+  namespace: payo-core
+spec:
+  podSelector:
+    matchLabels:
+      app: sanctions-screening
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: ledger-core
+      ports:
+        - port: 8001
