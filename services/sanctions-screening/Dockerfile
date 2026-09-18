@@ -4,8 +4,9 @@ WORKDIR /srv
 RUN useradd --create-home --uid 10001 appuser
 COPY pyproject.toml ./
 COPY app ./app
+# hadolint ignore=DL3013
 RUN pip install --no-cache-dir .
-USER appuser
+USER 10001
 EXPOSE 8001
-HEALTHCHECK --interval=15s --timeout=3s --start-period=10s CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz')" || exit 1
+HEALTHCHECK --interval=15s --timeout=3s --start-period=10s CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/healthz')"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]

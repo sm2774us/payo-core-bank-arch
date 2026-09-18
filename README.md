@@ -7,6 +7,60 @@ system of record reconciling **fiat reserves**, **on-chain PAYO-USD token supply
 Built as a showcase for the Senior Staff Engineer role's core mandate: architecture that a
 regulator (OCC/FFIEC) or external auditor can examine and trust.
 
+## Prerequisites
+
+Install these before anything else in this README. Platform-specific steps below; all three end with `git`, `python3.12`, `docker`, `terraform`, and `kubectl` on your `PATH`.
+
+| Tool | Why it's required |
+|---|---|
+| Git | clone the repo, run pre-commit hooks on `git commit` |
+| Python 3.11/3.12 | run/test the three services |
+| **Docker Desktop / Docker Engine** | `docker compose up` (local stack), `docker build` (CI parity), and the **`hadolint-docker`** pre-commit hook — it literally runs a container, so without Docker running, that hook fails with `Executable 'docker' not found` |
+| Terraform (or OpenTofu) | `terraform_fmt` / `terraform_validate` pre-commit hooks, and `infra/terraform` itself |
+| kubectl | deploying to EKS (§5, cloud) |
+
+### Windows 11 — Docker Desktop
+
+```powershell
+winget install --id Docker.DockerDesktop -e
+```
+Launch Docker Desktop once after install and leave it running — every
+`docker compose`, `docker build`, and `hadolint-docker` invocation needs its
+engine up in the background. If you'll run pre-commit from WSL2 (recommended,
+see the callout below), enable **Settings → Resources → WSL Integration →
+(toggle your distro)** in Docker Desktop so `docker` is callable from inside
+WSL too, without installing a second Docker engine there.
+
+### Ubuntu (WSL2 or bare metal) — Docker Engine
+
+If Docker Desktop's WSL integration (above) is already enabled, skip this —
+`docker` is already available inside your WSL distro. Otherwise (bare-metal
+Ubuntu, or a cloud VM):
+```bash
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker "$USER"
+newgrp docker        # or log out/in — refreshes your group membership
+docker run hello-world   # sanity check
+```
+
+> ### ⚠️ Windows users: run `git commit` / `pre-commit` from WSL2, not native PowerShell/CMD/Git Bash
+> The `terraform_fmt` and `terraform_validate` pre-commit hooks are Bash
+> scripts. Native Windows Git Bash mangles Windows-style paths when invoking
+> them (you'll see errors like `C:Userssm277.cachepre-commit...sh: No such
+> file or directory` — the backslashes get silently dropped), which is a
+> known incompatibility, not a bug in this repo. **The fix is to do all Git
+> operations for this repo from inside WSL2 Ubuntu** (§4b/§4c above), where
+> paths are native POSIX and the hooks run exactly as they do in CI:
+> ```bash
+> cd /mnt/c/SOFTWARE_ENGG_PROJECTS/PAYONEER/payo-core-bank-arch   # or, better, clone the repo directly under WSL's own filesystem (~/payo-core-bank) for much faster I/O
+> git commit -m "..."
+> ```
+> If you'd rather stay on native Windows, drop the two Terraform hooks from
+> `.pre-commit-config.yaml` and rely on the `terraform-validate` **CI job**
+> (which runs on Linux) as your formatting/validation gate instead — you
+> lose the local pre-commit check for Terraform specifically, everything
+> else (ruff, mypy, hadolint, etc.) is unaffected and still runs natively.
+
 ## 1. Why this design (for senior management / audit review)
 
 | Decision | Choice | Why (defensible to auditors/execs) |
@@ -131,6 +185,40 @@ whitespace, large files, YAML/JSON syntax) on the changed files — the exact
 same checks CI enforces, so a broken commit is caught locally before it ever
 reaches a PR. To update hook versions later: `pre-commit autoupdate`. To run
 a single hook ad hoc: `pre-commit run ruff --all-files`.
+
+### 4e. Troubleshooting the pre-commit hook
+
+**`Neither Terraform nor OpenTofu binary could be found` (Windows, during `git commit`)**
+This means `terraform.exe` is not on the `PATH` of the shell/IDE that Git is
+running the hook from — usually because Terraform was installed *after* the
+current terminal (or VS Code / GitHub Desktop) was opened, and it hasn't
+picked up the updated `PATH` yet.
+```powershell
+winget install --id Hashicorp.Terraform -e
+# then CLOSE and REOPEN your terminal (and VS Code, if you commit from there), then verify:
+terraform -v
+```
+If `terraform -v` still fails after reopening, install via Chocolatey instead
+(and again open a fresh terminal afterward):
+```powershell
+choco install terraform -y
+```
+As a last resort, point the hook at an explicit binary path without touching
+`PATH`, by adding `args: ["--tf-path=C:\path\to\terraform.exe"]` under the
+`terraform_fmt` / `terraform_validate` hooks in `.pre-commit-config.yaml`.
+
+**`hadolint-docker` fails or hangs**
+This hook runs a Docker container, so **Docker Desktop must be running**
+(and, on WSL, its *Settings → Resources → WSL Integration* must be enabled
+for your distro). If Docker is unavailable in your environment, skip it for
+that commit only: `SKIP=hadolint-docker git commit -m "..."` — CI still runs
+it, so it isn't a way to permanently bypass the check.
+
+**A hook modifies files and the commit is rejected**
+This is expected pre-commit behavior for auto-fixing hooks (`ruff-format`,
+`terraform_fmt`, whitespace/EOF fixers): the first run fixes the files and
+exits non-zero so you can review the diff; `git add -A && git commit` again
+immediately after succeeds since the files are now already compliant.
 
 ## 5. Run instructions
 
